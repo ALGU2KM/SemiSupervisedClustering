@@ -1,2 +1,2 @@
-# Semi-Supervised Data Labeling - SDL
+# Semi-supervised Data Labeling - SDL
 Agrupamento Profundo Semissupervisionado aplicado à Rotulação de Dados.
