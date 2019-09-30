@@ -1,2 +1,2 @@
 # LSDC
-Labebling Data by Semi-supervised Deep Clustering
+Agrupamento Profundo Semissupervisionado aplicado à Rotulação de Dados.
