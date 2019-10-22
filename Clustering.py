@@ -207,4 +207,7 @@ class SemiClustering(object):
         ind = linear_assignment(w.max() - w)
         return sum([w[i, j] for i, j in ind])*1.0/y_pred.size, w
         
+    def p_mat(self, q):
+        weight = q**2 / q.sum(0)
+        return (weight.T / weight.sum(1)).T
         
