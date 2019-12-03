@@ -83,24 +83,20 @@ class SemiClustering(object):
         self.lr_change_rate = 0.1
         
         input_img = Input(shape=(input_dim,))
-        encoded = Dense(500, activation='relu')(input_img)
+        encoded = Dense(128, activation='relu')(input_img)
         drop = Dropout(0.2)(encoded)
-        encoded = Dense(500, activation='relu')(drop)
-        drop = Dropout(0.2)(encoded)
-        encoded = Dense(2000, activation='relu')(drop)
-        
+        encoded = Dense(64, activation='relu')(drop)
+
         encoded = Dense(10, activation='relu')(encoded)
-        
-        decoded = Dense(2000, activation='relu')(encoded)
+
+        decoded = Dense(64, activation='relu')(encoded)
         drop = Dropout(0.2)(decoded)
-        decoded = Dense(500, activation='relu')(drop)
-        drop = Dropout(0.2)(decoded)
-        decoded = Dense(500, activation='relu')(drop)
-        decoded = Dense(input_dim, activation='sigmoid')(decoded)
+        decoded = Dense(128, activation='relu')(drop)
+        decoded = Dense(784, activation='sigmoid')(decoded)
         
         self.encoder = Model(input_img, encoded)
         self.autoencoder = Model(input_img, decoded)
-        sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
+        sgd = SGD(lr=0.1, decay=1e-6, momentum=1, nesterov=True)
         self.autoencoder.compile(optimizer=sgd, loss='binary_crossentropy')
         self.autoencoder.summary()
         
@@ -151,14 +147,7 @@ class SemiClustering(object):
 
                 y_pred = self.q.argmax(1)
                 delta_label = ((y_pred == self.y_pred).sum().astype(np.float32) / y_pred.shape[0])
-                if y is not None:
-                    acc = self.cluster_acc(y, y_pred)[0]
-                    self.accuracy.append(acc)
-                    #print('Iteration '+str(iteration)+', Accuracy '+str(np.round(acc, 5)))
-                else:
-                    a = 2
-                    #print(str(np.round(delta_label*100, 5))+'% change in label assignment')
-
+                
                 if delta_label < tol:
                     #print('Reached tolerance threshold. Stopping training.')
                     train = False
