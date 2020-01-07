@@ -3,7 +3,7 @@ import numpy as np
 import keras.backend as K
 from keras.initializers import RandomNormal
 from keras.engine.topology import Layer, InputSpec
-from keras.models import Model, Sequential
+from keras.models import Model, Sequential, load_model
 from keras.layers import Dense, Dropout, Input
 from keras.optimizers import SGD
 from sklearn.preprocessing import normalize
@@ -82,26 +82,13 @@ class SemiClustering(object):
         self.iters_lr_update = 20000
         self.lr_change_rate = 0.1
         
-        input_img = Input(shape=(input_dim,))
-        encoded = Dense(128, activation='relu')(input_img)
-        drop = Dropout(0.2)(encoded)
-        encoded = Dense(64, activation='relu')(drop)
-
-        encoded = Dense(10, activation='relu')(encoded)
-
-        decoded = Dense(64, activation='relu')(encoded)
-        drop = Dropout(0.2)(decoded)
-        decoded = Dense(128, activation='relu')(drop)
-        decoded = Dense(784, activation='sigmoid')(decoded)
-        
-        self.encoder = Model(input_img, encoded)
-        self.autoencoder = Model(input_img, decoded)
-        sgd = SGD(lr=0.1, decay=1e-6, momentum=1, nesterov=True)
-        self.autoencoder.compile(optimizer=sgd, loss='binary_crossentropy')
+               
+        self.encoder = load_model('E-MNIST.h5')
+        self.autoencoder = load_model('DAE-MNIST.h5')
         self.autoencoder.summary()
         
     def treinar(self, X, epocas):
-        self.autoencoder.fit(X, X, batch_size=self.batch_size, epochs=epocas, verbose=True)
+        #self.autoencoder.fit(X, X, batch_size=self.batch_size, epochs=epocas, verbose=True)
         
         self.kmeans = KMeans(n_clusters=self.n_clusters, n_init=20)
         self.y_pred = self.kmeans.fit_predict(self.encoder.predict(X))
@@ -109,6 +96,7 @@ class SemiClustering(object):
         
         self.DEC = Sequential([self.encoder, CamadaAgrupamento(self.n_clusters, weights=self.cluster_centres, name='agrupamento')])
         self.DEC.compile(loss='kullback_leibler_divergence', optimizer='adadelta')
+        self.DEC.summary()
         
     def cluster(self, X, y=None,
                 tol=0.01, update_interval=None,
