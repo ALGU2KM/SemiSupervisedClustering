@@ -27,6 +27,8 @@ preditas = sdc.DEC.predict_classes(X)
 
 Xt = tsne.fit_transform(X)
 
-plt.scatter(Xt[:,0], Xt[:,1], c = preditas)
+cores = ['#000000', '#0000FF', '#7FFFD4', '#008000', '#CD853F', '#8B008B', '#FF0000','#FFA500', '#FFFF00', '#FF1493']
+for i, x in enumerate(Xt):
+    plt.scatter(x[0], x[1], c = cores[preditas[i]], s = 5)
 plt.legend()
 plt.show()
