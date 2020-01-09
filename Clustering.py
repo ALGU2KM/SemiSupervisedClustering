@@ -1,3 +1,4 @@
+
 import sys
 import numpy as np
 import keras.backend as K
@@ -148,17 +149,17 @@ class SemiClustering(object):
                 self.cluster_centres = self.DEC.layers[-1].get_weights()[0]
 
             # train on batch
-            #sys.stdout.write('Iteration %d, ' % iteration)
+            sys.stdout.write('Iteration %d, ' % iteration)
             if (index+1)*self.batch_size > X.shape[0]:
                 loss = self.DEC.train_on_batch(X[index*self.batch_size::], self.p[index*self.batch_size::])
                 index = 0
-                #sys.stdout.write('Loss %f' % loss)
+                sys.stdout.write('Loss %f' % loss)
             else:
                 loss = self.DEC.train_on_batch(X[index*self.batch_size:(index+1) * self.batch_size],
                                                self.p[index*self.batch_size:(index+1) * self.batch_size])
-                #sys.stdout.write('Loss %f' % loss)
+                sys.stdout.write('Loss %f' % loss)
                 index += 1
-
+            sys.stdout.write('\n')
             # save intermediate
             #if iteration % save_interval == 0:
                 #z = self.encoder.predict(X)
