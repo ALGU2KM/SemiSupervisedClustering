@@ -7,15 +7,14 @@ import matplotlib.pyplot as plt
 from keras.utils import np_utils
 from DEC import DeepEmbeddingClustering
 
-dec = DeepEmbeddingClustering(10, 784)
-
-
 sca = MinMaxScaler()
 tsne = TSNE(n_components=2, verbose=1, perplexity=40, n_iter=300)
 
-dados = pd.read_csv('C:/Users/Servidor-LSI/Documents/Bruno Vicente/bases/mnist.csv')
+dados = pd.read_csv('d:/basedados/mnist64.csv')
 X = sca.fit_transform(dados.drop(['classe'], axis=1).values)
 Y = dados['classe'].values
+
+dec = DeepEmbeddingClustering(10, np.size(X, axis=1))
 
 dec.initialize(X)
 
