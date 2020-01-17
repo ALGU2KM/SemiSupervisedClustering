@@ -114,9 +114,9 @@ class DeepEmbeddingClustering(object):
 
         # greedy layer-wise training before end-to-end training:
 
-        self.encoders_dims = [self.input_dim, 500, 500, 2000, 10]
-        #self.encoders_dims = [self.input_dim, 250, 250, 1000, 10]
-        #self.encoders_dims = [self.input_dim, 10, 3]
+        #self.encoders_dims = [self.input_dim, 500, 500, 2000, 10]
+        self.encoders_dims = [self.input_dim, 250, 200, 100, n_clusters]
+        #self.encoders_dims = [self.input_dim, 10, n_clusters]
 
         self.input_layer = Input(shape=(self.input_dim,), name='input')
         dropout_fraction = 0.2
@@ -190,6 +190,7 @@ class DeepEmbeddingClustering(object):
             lr_schedule = LearningRateScheduler(step_decay)
 
             for i, autoencoder in enumerate(self.layer_wise_autoencoders):
+                print('Pre - treinamento ', i+1)
                 if i > 0:
                     weights = self.encoders[i-1].get_weights()
                     dense_layer = Dense(self.encoders_dims[i], input_shape=(current_input.shape[1],),
@@ -200,14 +201,14 @@ class DeepEmbeddingClustering(object):
                     current_input = encoder_model.predict(current_input)
 
                 autoencoder.fit(current_input, current_input, 
-                                batch_size=self.batch_size, epochs=layerwise_epochs, callbacks=[lr_schedule], verbose=True)
+                                batch_size=self.batch_size, epochs=2000, callbacks=[lr_schedule], verbose=True)
                 self.autoencoder.layers[i].set_weights(autoencoder.layers[1].get_weights())
                 self.autoencoder.layers[len(self.autoencoder.layers) - i - 1].set_weights(autoencoder.layers[-1].get_weights())
             
-            #print('....... Ajuste Fino do AutoEncoder')
+            print('....... Ajuste Fino do AutoEncoder')
             
             #update encoder and decoder weights:
-            self.autoencoder.fit(X, X, batch_size=self.batch_size, epochs=finetune_epochs, callbacks=[lr_schedule], verbose=True)
+            self.autoencoder.fit(X, X, batch_size=self.batch_size, epochs=3000, callbacks=[lr_schedule], verbose=True)
 
             #if save_autoencoder:
             #   self.autoencoder.save_weights('autoencoder.h5')
@@ -223,7 +224,7 @@ class DeepEmbeddingClustering(object):
         # initialize cluster centres using k-means
         #print('....... Inicialização dos Centróides dos Grupos com K-means.')
         if self.cluster_centres is None:
-            self.kmeans = KMeans(n_clusters=self.n_clusters, n_init=20)
+            self.kmeans = KMeans(n_clusters=5, n_init=20)
             self.y_pred = self.kmeans.fit_predict(self.encoder.predict(X))
             self.cluster_centres = self.kmeans.cluster_centers_
 
@@ -248,7 +249,7 @@ class DeepEmbeddingClustering(object):
 
     def cluster(self, X, y=None,
                 tol=0.01, update_interval=None,
-                iter_max=1e6,
+                iter_max=1e4,
                 save_interval=None,
                 **kwargs):
 
@@ -267,9 +268,10 @@ class DeepEmbeddingClustering(object):
         train = True
         iteration, index = 0, 0
         self.accuracy = []
-
+        print('Clustering...')
         while train:
-            #sys.stdout.write('\r')
+            
+            sys.stdout.write('\r')
             # cutoff iteration
             if iter_max < iteration:
                 #print('Reached maximum iteration limit. Stopping training.')
@@ -303,17 +305,17 @@ class DeepEmbeddingClustering(object):
                 self.cluster_centres = self.DEC.layers[-1].get_weights()[0]
 
             # train on batch
-            #sys.stdout.write('Iteration %d, ' % iteration)
+            sys.stdout.write('Iteration %d, ' % iteration)
             if (index+1)*self.batch_size > X.shape[0]:
                 loss = self.DEC.train_on_batch(X[index*self.batch_size::], self.p[index*self.batch_size::])
                 index = 0
-                #sys.stdout.write('Loss %f' % loss)
+                sys.stdout.write('Loss %f |' % loss)
             else:
                 loss = self.DEC.train_on_batch(X[index*self.batch_size:(index+1) * self.batch_size],
                                                self.p[index*self.batch_size:(index+1) * self.batch_size])
-                #sys.stdout.write('Loss %f' % loss)
+                sys.stdout.write('Loss %f |' % loss)
                 index += 1
-
+            
             # save intermediate
             #if iteration % save_interval == 0:
                 #z = self.encoder.predict(X)

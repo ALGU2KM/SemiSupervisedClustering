@@ -84,9 +84,58 @@ class SemiClustering(object):
         self.lr_change_rate = 0.1
         
                
-        self.encoder = load_model('E-MNIST.h5')
-        self.autoencoder = load_model('DAE-MNIST.h5')
-        self.autoencoder.summary()
+        #self.encoders_dims = [self.input_dim, 500, 500, 2000, 10]
+        #self.encoders_dims = [self.input_dim, 250, 200, 100, n_clusters]
+        self.encoders_dims = [self.input_dim, 10, n_clusters]
+
+        self.input_layer = Input(shape=(self.input_dim,), name='input')
+        dropout_fraction = 0.2
+        init_stddev = 0.01
+
+        self.layer_wise_autoencoders = []
+        self.encoders = []
+        self.decoders = []
+        for i  in range(1, len(self.encoders_dims)):
+            
+            encoder_activation = 'linear' if i == (len(self.encoders_dims) - 1) else 'relu'
+            encoder = Dense(self.encoders_dims[i], activation=encoder_activation,
+                            input_shape=(self.encoders_dims[i-1],),
+                            kernel_initializer=RandomNormal(mean=0.0, stddev=init_stddev, seed=None),
+                            bias_initializer='zeros', name='encoder_dense_%d'%i)
+            self.encoders.append(encoder)
+
+            decoder_index = len(self.encoders_dims) - i
+            decoder_activation = 'linear' if i == 1 else 'relu'
+            decoder = Dense(self.encoders_dims[i-1], activation=decoder_activation,
+                            kernel_initializer=RandomNormal(mean=0.0, stddev=init_stddev, seed=None),
+                            bias_initializer='zeros',
+                            name='decoder_dense_%d'%decoder_index)
+            self.decoders.append(decoder)
+
+            autoencoder = Sequential([
+                Dropout(dropout_fraction, input_shape=(self.encoders_dims[i-1],), 
+                        name='encoder_dropout_%d'%i),
+                encoder,
+                Dropout(dropout_fraction, name='decoder_dropout_%d'%decoder_index),
+                decoder
+            ])
+            autoencoder.compile(loss='mse', optimizer=SGD(lr=self.learning_rate, decay=0, momentum=0.9))
+            self.layer_wise_autoencoders.append(autoencoder)
+
+        # build the end-to-end autoencoder for finetuning
+        # Note that at this point dropout is discarded
+        self.encoder = Sequential(self.encoders)
+        self.encoder.compile(loss='mse', optimizer=SGD(lr=self.learning_rate, decay=0, momentum=0.9))
+        self.decoders.reverse()
+        self.autoencoder = Sequential(self.encoders + self.decoders)
+        self.autoencoder.compile(loss='mse', optimizer=SGD(lr=self.learning_rate, decay=0, momentum=0.9))
+
+        if cluster_centres is not None:
+            assert cluster_centres.shape[0] == self.n_clusters
+            assert cluster_centres.shape[1] == self.encoder.layers[-1].output_dim
+
+        if self.pretrained_weights is not None:
+            self.autoencoder.load_weights(self.pretrained_weights)
         
     def treinar(self, X, epocas):
         #self.autoencoder.fit(X, X, batch_size=self.batch_size, epochs=epocas, verbose=True)
@@ -101,7 +150,7 @@ class SemiClustering(object):
         
     def cluster(self, X, y=None,
                 tol=0.01, update_interval=None,
-                iter_max=1e6,
+                iter_max=1e5,
                 save_interval=None,
                 **kwargs):
 
