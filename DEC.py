@@ -115,7 +115,8 @@ class DeepEmbeddingClustering(object):
         # greedy layer-wise training before end-to-end training:
 
         #self.encoders_dims = [self.input_dim, 500, 500, 2000, 10]
-        self.encoders_dims = [self.input_dim, 250, 200, 100, n_clusters]
+        #self.encoders_dims = [self.input_dim, 250, 200, 100, n_clusters]
+        self.encoders_dims = [self.input_dim, 128, 64, 32, n_clusters]
         #self.encoders_dims = [self.input_dim, 10, n_clusters]
 
         self.input_layer = Input(shape=(self.input_dim,), name='input')
@@ -201,14 +202,14 @@ class DeepEmbeddingClustering(object):
                     current_input = encoder_model.predict(current_input)
 
                 autoencoder.fit(current_input, current_input, 
-                                batch_size=self.batch_size, epochs=2000, callbacks=[lr_schedule], verbose=True)
+                                batch_size=self.batch_size, epochs=500, callbacks=[lr_schedule], verbose=False)
                 self.autoencoder.layers[i].set_weights(autoencoder.layers[1].get_weights())
                 self.autoencoder.layers[len(self.autoencoder.layers) - i - 1].set_weights(autoencoder.layers[-1].get_weights())
             
             print('....... Ajuste Fino do AutoEncoder')
             
             #update encoder and decoder weights:
-            self.autoencoder.fit(X, X, batch_size=self.batch_size, epochs=3000, callbacks=[lr_schedule], verbose=True)
+            self.autoencoder.fit(X, X, batch_size=self.batch_size, epochs=1000, callbacks=[lr_schedule], verbose=False)
 
             #if save_autoencoder:
             #   self.autoencoder.save_weights('autoencoder.h5')
@@ -224,7 +225,7 @@ class DeepEmbeddingClustering(object):
         # initialize cluster centres using k-means
         #print('....... Inicialização dos Centróides dos Grupos com K-means.')
         if self.cluster_centres is None:
-            self.kmeans = KMeans(n_clusters=5, n_init=20)
+            self.kmeans = KMeans(n_clusters=self.n_clusters, n_init=20)
             self.y_pred = self.kmeans.fit_predict(self.encoder.predict(X))
             self.cluster_centres = self.kmeans.cluster_centers_
 

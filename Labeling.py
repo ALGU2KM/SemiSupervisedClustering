@@ -7,7 +7,7 @@ Created on Wed Jan 15 17:06:17 2020
 import keras.backend as K
 from sklearn.cluster import KMeans
 from keras.optimizers import SGD
-from keras.models import Model, Sequential
+from keras.models import Model, Sequential, load_model
 from keras.layers import Dense, Dropout, Input
 from keras.engine.topology import Layer, InputSpec
 
@@ -28,7 +28,7 @@ class DeepSelfLabeling:
         input_img = Input((dim,))
         encoded = Dense(250, activation='relu')(input_img)
         drop = Dropout(0.2)(encoded)
-        encoded = Dense(200, activation='relu')(drop)
+        encoded = Dense(150, activation='relu')(drop)
         drop = Dropout(0.2)(encoded)
         encoded = Dense(100, activation='relu')(drop)
         
@@ -36,14 +36,17 @@ class DeepSelfLabeling:
         
         decoded = Dense(100, activation='relu')(Z)
         drop = Dropout(0.2)(decoded)
-        decoded = Dense(200, activation='relu')(drop)
+        decoded = Dense(150, activation='relu')(drop)
         drop = Dropout(0.2)(decoded)
         decoded = Dense(250, activation='relu')(drop)
         decoded = Dense(dim, activation='sigmoid')(decoded)
-        
+                        
         self.encoder = Model(input_img, Z)
         self.autoencoder = Model(input_img, decoded)
         self.autoencoder.compile(loss='mse', optimizer=SGD(lr=0.1, decay=0, momentum=0.9))
+                
+        #self.autoencoder = load_model('DAE-MNIST64.h5')
+        #self.encoder = load_model('encoder.h5')
     
     def inicializacao(self, X, epocas = 500):
         self.autoencoder.fit(X, X, epochs=epocas, batch_size=self.lote)
@@ -51,7 +54,7 @@ class DeepSelfLabeling:
         self.kmeans = KMeans(n_clusters=self.k)
         self.y_pred = self.kmeans.fit_predict(self.encoder.predict(X))
         self.centroides = self.kmeans.cluster_centers_
-        
+                
         self.DEC = Sequential([self.encoder, ClusteringLayer(self.k, weights=self.centroides, name='Agrupamento')])
         self.DEC.compile(loss='kullback_leibler_divergence', optimizer='adadelta')
         self.DEC.summary()
@@ -59,6 +62,40 @@ class DeepSelfLabeling:
     def p_mat(self, q):
         weight = q**2 / q.sum(0)
         return (weight.T / weight.sum(1)).T
+
+def rotular_amostras(self, x, L, y, k, t):
+
+        """ Calculando distância da Amostra para cada elemento de L """        
+        dis = []
+        for xr in L:
+            #dis.append(distance.euclidean(x, xr))
+            divergencia = entropy(x, xr)
+            dis.append(divergencia)
+        
+        """ Descobrindo os k vizinhos rotulados menos divergentes """
+        rot = pd.DataFrame(L)
+        rot['y'] = y
+        
+        
+        rot['dis'] = dis
+        rot = rot.sort_values(by='dis')
+        vizinhos = rot.iloc[0:k,:]
+        vizinhos = vizinhos[vizinhos[dis]<=t]        
+        
+        """ Caso não existem vizinhos rotulados suficientes """
+        if np.size(vizinhos, axis=1) < k:
+            return -1
+        
+        """ Calculando as Classes """
+        classes = np.unique(y)
+        P = []
+        for c in classes:
+            q = (vizinhos['y'] == c).sum()
+            p = q / k
+            P.append(p)
+        classe = self.calcular_classe(P)
+        
+        return classe
         
 class ClusteringLayer(Layer):
     
