@@ -1,15 +1,20 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Jan 15 17:06:17 2020
+Created on Thu Jan 23 21:07:16 2020
 
 @author: brunn
 """
+
 import keras.backend as K
+import pandas as pd
+import numpy as np
 from sklearn.cluster import KMeans
 from keras.optimizers import SGD
 from keras.models import Model, Sequential, load_model
 from keras.layers import Dense, Dropout, Input
 from keras.engine.topology import Layer, InputSpec
+from DEC import DeepEmbeddingClustering
+from scipy.stats import entropy
 
 class DeepSelfLabeling:
     
@@ -24,119 +29,20 @@ class DeepSelfLabeling:
         self.aplha = 1.0
         self.lote = lote
         self.taxaAprendizado = taxaAprendizado
+        self.dec = DeepEmbeddingClustering(self.k, self.dim)
         
-        input_img = Input((dim,))
-        encoded = Dense(250, activation='relu')(input_img)
-        drop = Dropout(0.2)(encoded)
-        encoded = Dense(150, activation='relu')(drop)
-        drop = Dropout(0.2)(encoded)
-        encoded = Dense(100, activation='relu')(drop)
+    def selfLabeled(self, L, U, y):
+        """ INICIALIZAÇÃO """
         
-        Z = Dense(k, activation='relu')(encoded)
+        self.dec.initialize(U)
+        grupos = self.dec.cluster(U)
+        PL = pd.DataFrame(dec.DEC.predict(L))
+        PU = pd.DataFrame(dec.DEC.predict(U))
+        PL['grupo'] = dec.DEC.predict_classes(L)
+        PL['classe'] = y
+        PU['grupo'] = dec.DEC.predict_classes(U)
         
-        decoded = Dense(100, activation='relu')(Z)
-        drop = Dropout(0.2)(decoded)
-        decoded = Dense(150, activation='relu')(drop)
-        drop = Dropout(0.2)(decoded)
-        decoded = Dense(250, activation='relu')(drop)
-        decoded = Dense(dim, activation='sigmoid')(decoded)
-                        
-        self.encoder = Model(input_img, Z)
-        self.autoencoder = Model(input_img, decoded)
-        self.autoencoder.compile(loss='mse', optimizer=SGD(lr=0.1, decay=0, momentum=0.9))
-                
-        #self.autoencoder = load_model('DAE-MNIST64.h5')
-        #self.encoder = load_model('encoder.h5')
-    
-    def inicializacao(self, X, epocas = 500):
-        self.autoencoder.fit(X, X, epochs=epocas, batch_size=self.lote)
-                
-        self.kmeans = KMeans(n_clusters=self.k)
-        self.y_pred = self.kmeans.fit_predict(self.encoder.predict(X))
-        self.centroides = self.kmeans.cluster_centers_
-                
-        self.DEC = Sequential([self.encoder, ClusteringLayer(self.k, weights=self.centroides, name='Agrupamento')])
-        self.DEC.compile(loss='kullback_leibler_divergence', optimizer='adadelta')
-        self.DEC.summary()
-        
-    def p_mat(self, q):
-        weight = q**2 / q.sum(0)
-        return (weight.T / weight.sum(1)).T
-
-def rotular_amostras(self, x, L, y, k, t):
-
-        """ Calculando distância da Amostra para cada elemento de L """        
-        dis = []
-        for xr in L:
-            #dis.append(distance.euclidean(x, xr))
-            divergencia = entropy(x, xr)
-            dis.append(divergencia)
-        
-        """ Descobrindo os k vizinhos rotulados menos divergentes """
-        rot = pd.DataFrame(L)
-        rot['y'] = y
-        
-        
-        rot['dis'] = dis
-        rot = rot.sort_values(by='dis')
-        vizinhos = rot.iloc[0:k,:]
-        vizinhos = vizinhos[vizinhos[dis]<=t]        
-        
-        """ Caso não existem vizinhos rotulados suficientes """
-        if np.size(vizinhos, axis=1) < k:
-            return -1
-        
-        """ Calculando as Classes """
-        classes = np.unique(y)
-        P = []
-        for c in classes:
-            q = (vizinhos['y'] == c).sum()
-            p = q / k
-            P.append(p)
-        classe = self.calcular_classe(P)
-        
-        return classe
-        
-class ClusteringLayer(Layer):
-    
-    def __init__(self, output_dim, input_dim=None, weights=None, alpha=1.0, **kwargs):
-        self.output_dim = output_dim
-        self.input_dim = input_dim
-        self.alpha = alpha
-        # kmeans cluster centre locations
-        self.initial_weights = weights
-        self.input_spec = [InputSpec(ndim=2)]
-
-        if self.input_dim:
-            kwargs['input_shape'] = (self.input_dim,)
-        super(ClusteringLayer, self).__init__(**kwargs)
-
-    def build(self, input_shape):
-        assert len(input_shape) == 2
-        input_dim = input_shape[1]
-        self.input_spec = [InputSpec(dtype=K.floatx(),
-                                     shape=(None, input_dim))]
-
-        self.W = K.variable(self.initial_weights)
-        self.trainable_weights = [self.W]
-
-    def call(self, x, mask=None):
-        q = 1.0/(1.0 + K.sqrt(K.sum(K.square(K.expand_dims(x, 1) - self.W), axis=2))**2 /self.alpha)
-        q = q**((self.alpha+1.0)/2.0)
-        q = K.transpose(K.transpose(q)/K.sum(q, axis=1))
-        return q
-
-    def get_output_shape_for(self, input_shape):
-        assert input_shape and len(input_shape) == 2
-        return (input_shape[0], self.output_dim)
-
-    def compute_output_shape(self, input_shape):
-        assert input_shape and len(input_shape) == 2
-        return (input_shape[0], self.output_dim)
-
-    def get_config(self):
-        config = {'output_dim': self.output_dim,
-                  'input_dim': self.input_dim}
-        base_config = super(ClusteringLayer, self).get_config()
-        return dict(list(base_config.items()) + list(config.items()))
-    
+        """ ROTULAÇÃO """
+        for i in np.arange(self.k):
+            
+            pass

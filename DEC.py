@@ -43,7 +43,7 @@ class ClusteringLayer(Layer):
     # Output shape
         2D tensor with shape: `(nb_samples, output_dim)`.
     '''
-    def __init__(self, output_dim, input_dim=None, weights=None, alpha=1.0, **kwargs):
+    def __init__(self, output_dim, input_dim=None, weights=None,  alpha=1.0, **kwargs):
         self.output_dim = output_dim
         self.input_dim = input_dim
         self.alpha = alpha
@@ -115,8 +115,8 @@ class DeepEmbeddingClustering(object):
         # greedy layer-wise training before end-to-end training:
 
         #self.encoders_dims = [self.input_dim, 500, 500, 2000, 10]
-        #self.encoders_dims = [self.input_dim, 250, 200, 100, n_clusters]
-        self.encoders_dims = [self.input_dim, 128, 64, 32, n_clusters]
+        self.encoders_dims = [self.input_dim, 250, 200, 100, n_clusters]
+        #self.encoders_dims = [self.input_dim, 128, 64, 32, n_clusters]
         #self.encoders_dims = [self.input_dim, 10, n_clusters]
 
         self.input_layer = Input(shape=(self.input_dim,), name='input')

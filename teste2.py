@@ -13,7 +13,7 @@ k = 6
 sca = MinMaxScaler()
 tsne = TSNE(n_components=2, verbose=1, perplexity=40, n_iter=300)
 
-dados = pd.read_csv('d:/basedados/matupiba2.csv')
+dados = pd.read_csv('d:/basedados/mnist64.csv')
 dados = dados[dados['classe'] < k]
 X = sca.fit_transform(dados.drop(['classe'], axis=1).values)
 Y = dados['classe'].values
@@ -32,6 +32,7 @@ PU = pd.DataFrame(dec.DEC.predict(U))
 PL['grupo'] = dec.DEC.predict_classes(L)
 PL['classe'] = y
 PU['grupo'] = dec.DEC.predict_classes(U)
+PU['classe'] = yu
 
 PL.to_csv('PL.csv', index=False)
 PU.to_csv('PU.csv', index=False)

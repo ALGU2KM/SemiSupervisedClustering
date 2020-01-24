@@ -8,12 +8,12 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score, cohen_kappa_score
 
 norm = MinMaxScaler()
-dados = pd.read_csv('d:/basedados/urucui.csv')
+dados = pd.read_csv('d:/basedados/matopiba.csv')
 
 #Carregando os dados do cenário
 Y = dados['classe'].values
 X = dados.drop(['classe'], axis=1).values
-X_train, X_test, y_train, y_test = train_test_split(X,Y, train_size=0.01, test_size=0.99, stratify=Y)
+X_train, X_test, y_train, y_test = train_test_split(X,Y, train_size=0.005, test_size=0.995, stratify=Y)
 X_train = norm.fit_transform(X_train)
 X_test = norm.transform(X_test)
 acuracia = []
@@ -23,8 +23,8 @@ for i in np.arange(1,11,1):
     print('...... Vizinhos ', i)
     modelo = KNeighborsClassifier(n_neighbors=i)
     RF = RandomForestClassifier(n_estimators=i)
-    RF.fit(X_train, y_train)
-    preditas = RF.predict(X_test)
+    modelo.fit(X_train, y_train)
+    preditas = modelo.predict(X_test)
     a = accuracy_score(y_test, preditas)
     acuracia.append(a)
 
