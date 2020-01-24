@@ -8,7 +8,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score, cohen_kappa_score
 
 norm = MinMaxScaler()
-dados = pd.read_csv('d:/basedados/matopiba.csv')
+dados = pd.read_csv('d:/basedados/agricultura.csv')
 
 #Carregando os dados do cenário
 Y = dados['classe'].values

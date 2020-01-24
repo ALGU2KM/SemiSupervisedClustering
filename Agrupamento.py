@@ -83,29 +83,62 @@ def rotular_amostras(x, L, y, k, t):
 rotulos = np.zeros(np.size(U, axis=0))-1
 estado = rotulos.copy()
 k = 6
-
    
 for i in np.arange(k):
-        
+   
     GL = L[L['grupo']==i] 
     GU = U[U['grupo']==i]
     indice = GU.index.values
     
     gu = GU['grupo'].values
     gl = GL['grupo'].values
-    cl = GL['classe'].values
-    GU = GU.drop(['grupo'], axis=1).values
-    GL = GL.drop(['classe','grupo'], axis=1).values
+    yl = GL['classe'].values
+    yu = GU['classe'].values
+    U = GU.drop(['classe','grupo'], axis=1).values
+    L = GL.drop(['classe','grupo'], axis=1).values
     
-    for i, x in enumerate(GU):
-        print('Amostra: ', i)
-        r = rotular_amostras(x, GL, cl, 5, 0.1)
-        rotulos[indice[i]]  = r
+    classes = np.unique(yl)
     
+    grupo = np.zeros(np.size(yu))-1
     
+    for a, x in enumerate(U):
+        print('Amostra: ', a)
+        r = rotular_amostras(x, L, yl, 5, 0.1)
+        rotulos[indice[a]]  = r
     
     
 
+    
+colunas = ['a','b','classe']  
+
+A = pd.DataFrame(np.array(
+    [
+     [1,1,-1],
+     [2,2,1],
+     [2,3,2],
+     [6,6,-1],
+     [7,8,5],
+     [6,7,-1],
+     [5,6,-1],
+     [7,9,2],
+     [5,4,1],
+     [8,9,-1]
+     ]
+    ), columns=colunas)   
+
+B = pd.DataFrame(np.array(
+    [
+     [1,2,1],
+     [3,2,3],
+     [4,2,1]
+     ]
+    ),columns=colunas)   
+    
+    
+R = A[A['classe'] != -1]
+UR = A[A['classe'] == -1]
+A = UR
+B = pd.concat([B, R])
 
 
 

@@ -6,6 +6,7 @@ Definition can accept somewhat custom neural networks. Defaults are from paper.
 '''
 import sys
 import numpy as np
+import pandas as pd
 import keras.backend as K
 from keras.initializers import RandomNormal
 from keras.engine.topology import Layer, InputSpec
@@ -17,6 +18,8 @@ from keras.callbacks import LearningRateScheduler
 from sklearn.utils.linear_assignment_ import linear_assignment
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
+from SEEDEDKmeans import SEEDS
+
 if (sys.version[0] == 2):
     import cPickle as pickle
 else:
@@ -172,7 +175,7 @@ class DeepEmbeddingClustering(object):
         weight = q**2 / q.sum(0)
         return (weight.T / weight.sum(1)).T
 
-    def initialize(self, X, save_autoencoder=False, layerwise_pretrain_iters=50000, finetune_iters=100000):
+    def initialize(self, X, L, y, save_autoencoder=False, layerwise_pretrain_iters=50000, finetune_iters=100000):
         if self.pretrained_weights is None:
 
             iters_per_epoch = int(len(X) / self.batch_size)
@@ -226,7 +229,14 @@ class DeepEmbeddingClustering(object):
         #print('....... Inicialização dos Centróides dos Grupos com K-means.')
         if self.cluster_centres is None:
             self.kmeans = KMeans(n_clusters=self.n_clusters, n_init=20)
-            self.y_pred = self.kmeans.fit_predict(self.encoder.predict(X))
+            self.kmeans.fit(L)
+            
+            L = pd.DataFrame(self.encoder.predict(L))
+            L['classe'] = y
+            centroides = L.groupby(['classe']).mean().values
+
+            self.kmeans.cluster_centers_ = centroides
+            self.y_pred = self.kmeans.predict(self.encoder.predict(X))
             self.cluster_centres = self.kmeans.cluster_centers_
 
         # prepare DEC model
