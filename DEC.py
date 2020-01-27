@@ -175,7 +175,7 @@ class DeepEmbeddingClustering(object):
         weight = q**2 / q.sum(0)
         return (weight.T / weight.sum(1)).T
 
-    def initialize(self, X, L, y, save_autoencoder=False, layerwise_pretrain_iters=50000, finetune_iters=100000):
+    def initialize(self, X, save_autoencoder=False, layerwise_pretrain_iters=50000, finetune_iters=100000):
         if self.pretrained_weights is None:
 
             iters_per_epoch = int(len(X) / self.batch_size)
@@ -229,13 +229,7 @@ class DeepEmbeddingClustering(object):
         #print('....... Inicialização dos Centróides dos Grupos com K-means.')
         if self.cluster_centres is None:
             self.kmeans = KMeans(n_clusters=self.n_clusters, n_init=20)
-            self.kmeans.fit(L)
-            
-            L = pd.DataFrame(self.encoder.predict(L))
-            L['classe'] = y
-            centroides = L.groupby(['classe']).mean().values
-
-            self.kmeans.cluster_centers_ = centroides
+            self.kmeans.fit(self.encoder.predict(X))
             self.y_pred = self.kmeans.predict(self.encoder.predict(X))
             self.cluster_centres = self.kmeans.cluster_centers_
 
@@ -246,8 +240,7 @@ class DeepEmbeddingClustering(object):
         #                                        name='clustering')(self.encoder))
         self.DEC = Sequential([self.encoder, ClusteringLayer(self.n_clusters, weights=self.cluster_centres, name='clustering')])
         self.DEC.compile(loss='kullback_leibler_divergence', optimizer='adadelta')
-        return
-    
+        return    
 
     def cluster_acc(self, y_true, y_pred):
         assert y_pred.size == y_true.size

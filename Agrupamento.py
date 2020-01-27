@@ -94,69 +94,17 @@ for i in np.arange(k):
     gl = GL['grupo'].values
     yl = GL['classe'].values
     yu = GU['classe'].values
-    U = GU.drop(['classe','grupo'], axis=1).values
-    L = GL.drop(['classe','grupo'], axis=1).values
+    
+    Ut = GU.drop(['classe','grupo'], axis=1).values
+    Lt = GL.drop(['classe','grupo'], axis=1).values
     
     classes = np.unique(yl)
     
     grupo = np.zeros(np.size(yu))-1
     
-    for a, x in enumerate(U):
+    for a, x in enumerate(Ut):
         print('Amostra: ', a)
-        r = rotular_amostras(x, L, yl, 5, 0.1)
+        r = rotular_amostras(x, Lt, yl, 5, 0.1)
         rotulos[indice[a]]  = r
     
     
-
-    
-colunas = ['a','b','classe']  
-
-A = pd.DataFrame(np.array(
-    [
-     [1,1,-1],
-     [2,2,1],
-     [2,3,2],
-     [6,6,-1],
-     [7,8,5],
-     [6,7,-1],
-     [5,6,-1],
-     [7,9,2],
-     [5,4,1],
-     [8,9,-1]
-     ]
-    ), columns=colunas)   
-
-B = pd.DataFrame(np.array(
-    [
-     [1,2,1],
-     [3,2,3],
-     [4,2,1]
-     ]
-    ),columns=colunas)   
-    
-    
-R = A[A['classe'] != -1]
-UR = A[A['classe'] == -1]
-A = UR
-B = pd.concat([B, R])
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
