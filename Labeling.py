@@ -31,7 +31,7 @@ class DeepSelfLabeling:
         self.aplha = 1.0
         self.lote = lote
         self.taxaAprendizado = taxaAprendizado
-        self.dec = DeepEmbeddingClustering(self.k, self.dim)
+        self.dec = DeepEmbeddingClustering(self.k, self.dim, batch_size=self.lote)
         
     def self_Labeled(self, L, U, y):
         PL, PU = self.inicializacao(L, U, y)
@@ -66,7 +66,7 @@ class DeepSelfLabeling:
         
         """ DIVISÃO DOS GRUPOS """
         indice = U.index.values
-        grupos = []
+
         for i in np.arange(self.k):
             Ut = U[U['grupo'] == i]
             Ut = Ut.drop(['grupo'], axis=1).values
@@ -74,14 +74,17 @@ class DeepSelfLabeling:
             for a, x in enumerate(Ut):
                 r = self.rotular_amostras(x, L.drop(['classe'], axis=1).values, y, self.k, self.t)
                 self.rotulos[indice[a]-self.fi]  = r
-                grupos.append(r)
+
         """ Remoção dos elementos rotulados """
-        Ut['classe'] = grupos
+        Ut = U.drop(['grupo'], axis=1)
+        Ut['classe'] = self.rotulos
         novos = Ut[Ut['classe'] != -1]
         L = pd.concat([L, novos])
         Ut = Ut[Ut['classe']==-1]
         Ut = Ut.drop(['classe'], axis=1)
         return L, Ut
+        
+    def calcular_centroides(self, X):
         
         
     def rotular_amostras(self, x, L, y, k, t):

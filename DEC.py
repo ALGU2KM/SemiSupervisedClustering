@@ -118,9 +118,9 @@ class DeepEmbeddingClustering(object):
         # greedy layer-wise training before end-to-end training:
 
         #self.encoders_dims = [self.input_dim, 500, 500, 2000, 10]
-        self.encoders_dims = [self.input_dim, 250, 200, 100, n_clusters]
+        #self.encoders_dims = [self.input_dim, 250, 200, 100, n_clusters]
         #self.encoders_dims = [self.input_dim, 128, 64, 32, n_clusters]
-        #self.encoders_dims = [self.input_dim, 10, n_clusters]
+        self.encoders_dims = [self.input_dim, 10, n_clusters]
 
         self.input_layer = Input(shape=(self.input_dim,), name='input')
         dropout_fraction = 0.2
@@ -179,8 +179,8 @@ class DeepEmbeddingClustering(object):
         if self.pretrained_weights is None:
 
             iters_per_epoch = int(len(X) / self.batch_size)
-            layerwise_epochs = max(int(layerwise_pretrain_iters / iters_per_epoch), 1)
-            finetune_epochs = max(int(finetune_iters / iters_per_epoch), 1)
+            #layerwise_epochs = max(int(layerwise_pretrain_iters / iters_per_epoch), 1)
+            #finetune_epochs = max(int(finetune_iters / iters_per_epoch), 1)
 
             #print('....... Pre-Treinamento das Camadas')
             current_input = X
