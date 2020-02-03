@@ -24,3 +24,31 @@ PL, PU = dsl.self_Labeled(L, U, y)
 
 Rot, NaoRot = dsl.divisao_grupos(PU, PL)
 
+G1 = pd.DataFrame(np.array([
+        [1,10,0],
+        [2,10,0],
+        [2,30,0 ],]), columns=['cor','tamanho', 'textura'])
+
+G2 = pd.DataFrame(np.array([
+        [1,20,1],
+        [3,20,1],
+        [2,20,1]]), columns=['cor','tamanho', 'textura'])
+
+G3 = pd.DataFrame(np.array([
+        [4,30,1],
+        [4,20,1]]), columns=['cor','tamanho', 'textura'])
+
+def entropia(X):
+    T = np.size(X, axis=1)
+    colunas = X.columns.values
+    H = []
+    for c in colunas:
+        dados = X[c]
+        p = dados.value_counts()
+        p = p.values / T
+        p = p * np.log2(p)
+        H.append(p.sum())
+    return H
+
+H = entropia(G1)
+        
