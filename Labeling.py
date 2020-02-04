@@ -85,7 +85,8 @@ class DeepSelfLabeling:
         return L, Ut
         
     def calcular_centroides(self, X):
-        
+        pass
+            
         
     def rotular_amostras(self, x, L, y, k, t):
 
