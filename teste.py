@@ -18,6 +18,9 @@ tsne = TSNE(n_components=2, verbose=1, perplexity=40, n_iter=300)
 dados = pd.read_csv('d:/basedados/sementes.csv')
 X = sca.fit_transform(dados.drop(['classe'], axis=1).values)
 Y = dados['classe'].values
+dados = pd.DataFrame(X)
+dados['classe'] = Y
+
 
 L, U, y, yu = train_test_split(X,Y, train_size=0.05, test_size=0.95, stratify=Y)
 
@@ -45,21 +48,29 @@ def tstudent(x, centroides):
 
 
 den = tstudent(x, centros)
+PU['grupo'] = yu
+G1 = PU[PU['grupo'] == 1]
+G1 = G1.drop(['grupo'], axis=1)
+G2 = dados[dados['classe'] == 2]
+G2 = G2.drop(['classe'], axis=1)
+G3 = dados[dados['classe'] == 3]
+G3 = G3.drop(['classe'], axis=1)
 
+"""
 G1 = pd.DataFrame(np.array([
         [1,10,0],
         [2,10,0],
         [2,30,0 ],]), columns=['cor','tamanho', 'textura'])
-
+"""
 G2 = pd.DataFrame(np.array([
-        [1,20,1],
-        [3,20,1],
-        [2,20,1]]), columns=['cor','tamanho', 'textura'])
-
+        [1.1,1.2,1.3],
+        [1,1,1],
+        [0.9,1.1,0.91]]), columns=['cor','tamanho', 'textura'])
+"""
 G3 = pd.DataFrame(np.array([
         [4,30,1],
         [4,20,1]]), columns=['cor','tamanho', 'textura'])
-
+"""
 def entropia(X):
     T = np.size(X, axis=1)
     colunas = X.columns.values
@@ -68,8 +79,8 @@ def entropia(X):
         dados = X[c]
         p = dados.value_counts()
         p = p.values / T
-        p = p * np.log2(p)
+        p = -(p * np.log2(p))
         H.append(p.sum())
-    return H
+        
+    return np.sum(H)
 
-H = entropia(G1)
