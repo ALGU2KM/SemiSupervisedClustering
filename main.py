@@ -1,33 +1,63 @@
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.manifold import TSNE
-import matplotlib.pyplot as plt
-from keras.utils import np_utils
-from DEC import DeepEmbeddingClustering
-from sklearn.model_selection import train_test_split
-from keras.models import load_model
+import keras.backend as K
+from numpy import linalg as LA
+from sklearn.mixture import GaussianMixture
 
-sca = MinMaxScaler()
-tsne = TSNE(n_components=2, verbose=1, perplexity=40, n_iter=300)
+x = np.array(
+        [
+            [11.0,11.0,14.5,12.0,11.0],
+            [2.0,3.0,1.0,2.0,2.0]
+        ],
+        dtype=np.float32
+        )
 
-dados = pd.read_csv('d:/basedados/sementes.csv')
-#dados = dados[dados['classe'] < 3]
-X = sca.fit_transform(dados.drop(['classe'], axis=1).values)
-Y = dados['classe'].values
+pesos = np.array(
+        [
+                [2.0,5.0,3.0,2.0,3.0],
+                [6.0,3.0,5.0,4.0,7.0],
+                [10.0,12.0,15.0,14.0,13.0],
+                [0.1,0.2,0.3,0.1,0.4]
+                ], 
+        dtype=np.float32
+        )
 
-L, U, y, yu = train_test_split(X,Y, train_size=0.05, test_size=0.95, stratify=Y)
+def parzen_window_est(x_samples, h=1, center=[0,0,0]):
+    '''
+    Implementation of the Parzen-window estimation for hypercubes.
 
-dec = DeepEmbeddingClustering(3, np.size(X, axis=1), batch_size=30)
-dec.initialize(U)
-dec.cluster(U)
+    Keyword arguments:
+        x_samples: A 'n x d'-dimensional numpy array, where each sample
+            is stored in a separate row.
+        h: The length of the hypercube.
+        center: The coordinate center of the hypercube
 
-Xt = tsne.fit_transform(dec.encoder.predict(U))
-preditas = dec.DEC.predict_classes(U)
-acuracia = dec.cluster_acc(yu, preditas)
+    Returns the probability density for observing k samples inside the hypercube.
 
-cores = ['#000000', '#0000FF', '#7FFFD4', '#008000', '#CD853F', '#8B008B', '#FF0000','#FFA500', '#FFFF00', '#FF1493']
-for i, x in enumerate(Xt):
-    plt.scatter(x[0], x[1], c = cores[yu[i]], s = 5)
-plt.legend()
-plt.show()
+    '''
+    dimensions = x_samples.shape[1]
+
+    #assert (len(center) == dimensions),  
+    'Number of center coordinates have to match sample dimensions'
+    k = 0
+    for x in x_samples:
+        is_inside = 1
+        for axis,center_point in zip(x, center):
+            if np.abs(axis-center_point) > (h/2):
+                is_inside = 0
+        k += is_inside
+    return (k / len(x_samples)) / (h**dimensions)
+
+print('p(x) =', parzen_window_est(x, h=1, center=pesos[0,:]))
+
+def student(x, c):
+    v = []
+    for w in pesos:
+        norma = LA.norm(x - w)
+        den = 1 / np.sqrt((1 + norma**2))
+        v.append(den)
+    den = np.sum(v)
+    q = v / den
+    return q
+
+d = student(x, 0)

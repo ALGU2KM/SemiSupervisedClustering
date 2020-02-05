@@ -12,6 +12,7 @@ from keras.callbacks import LearningRateScheduler
 from sklearn.utils.linear_assignment_ import linear_assignment
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
+from numpy import linalg
 
 class CamadaAgrupamento(Layer):
     
@@ -37,10 +38,19 @@ class CamadaAgrupamento(Layer):
         self.trainable_weights = [self.W] 
 
     def call(self, x, mask=None):
-        q = 1.0/(1.0 + K.sqrt(K.sum(K.square(K.expand_dims(x, 1) - self.W), axis=2))**2 /self.alpha)
-        q = q**((self.alpha+1.0)/2.0)
-        q = K.transpose(K.transpose(q)/K.sum(q, axis=1))
-        return q
+        #q = 1.0/(1.0 + K.sqrt(K.sum(K.square(K.expand_dims(x, 1) - self.W), axis=2))**2 /self.alpha)
+        #q = q**((self.alpha+1.0)/2.0)
+        #q = K.transpose(K.transpose(q)/K.sum(q, axis=1))
+        
+        v = []
+        for w in self.initial_weights:
+            norma = linalg.norm(x - w)
+            den = 1 / np.sqrt((1 + norma**2))
+            v.append(den)
+            den = np.sum(v)
+            q = v / den
+        
+        return K.variable(q)
 
     def get_output_shape_for(self, input_shape):
         assert input_shape and len(input_shape) == 2

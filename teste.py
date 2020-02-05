@@ -15,7 +15,7 @@ from scipy.stats import norm
 sca = MinMaxScaler()
 tsne = TSNE(n_components=2, verbose=1, perplexity=40, n_iter=300)
 
-dados = pd.read_csv('d:/basedados/sementes.csv')
+dados = pd.read_csv('c:/basedados/sementes.csv')
 X = sca.fit_transform(dados.drop(['classe'], axis=1).values)
 Y = dados['classe'].values
 dados = pd.DataFrame(X)
@@ -24,7 +24,7 @@ dados['classe'] = Y
 
 L, U, y, yu = train_test_split(X,Y, train_size=0.05, test_size=0.95, stratify=Y)
 
-dsl = DeepSelfLabeling(k=np.size(np.unique(Y)), dim=np.size(L, axis=1),lote=30)
+dsl = DeepSelfLabeling(k=5, dim=np.size(L, axis=1),lote=30)
 
 PL, PU = dsl.self_Labeled(L, U, y)
 
